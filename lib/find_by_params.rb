@@ -1,7 +1,11 @@
 module ActiveRecord
 	class Base
 		def self.find_by_params(params = {}, options = {})
-			scope = scoped_by_params(params, options)
+			params_not_for_scoping = [:page, :order_by, :order]
+			options_not_for_scoping = [:per_page, :paginate]
+			
+			scope = scoped_by_params(params.reject  {|k, v| params_not_for_scoping.include?(k.to_sym) },
+															 options.reject {|k, v| options_not_for_scoping.include?(k.to_sym) })
 
 			if params[:order_by]
 				asc_or_desc = params[:order].to_i == 0 ? "ASC" : "DESC"   # i'm assuming here that ASC is default
@@ -12,7 +16,7 @@ module ActiveRecord
 		end
 
 		def self.count_by_params(params = {}, options = {})
-			scoped_by_params(params).count
+			scoped_by_params(params, options).count
 		end
 
 
