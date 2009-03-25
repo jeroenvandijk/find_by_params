@@ -27,7 +27,7 @@ describe "Added class methods to ActiveRecord::Base" do
         @base.find_by_params(params, @options)
       end
 
-      it "should default to DESC" do
+      it "should default to ASC" do
         params = @params.merge(:order_by => "field_name")
         @scope.expects(:find).with(:all, :order => "`field_name` ASC")
         @base.find_by_params(params, @options)        
