@@ -7,10 +7,8 @@ module ActiveRecord
 			scope = scoped_by_params(params.reject  {|k, v| params_not_for_scoping.include?(k.to_sym) },
 															 options.reject {|k, v| options_not_for_scoping.include?(k.to_sym) })
 
-			if params[:order_by]
-				asc_or_desc = params[:order].to_i == 0 ? "ASC" : "DESC"   # i'm assuming here that ASC is default
-				order = "`#{params[:order_by]}` #{asc_or_desc}"           # Note the ` quotes to prevent sql injection
-			end
+			# create the order part of the query, supports multiple order columns and directions
+			order = create_order(params[:ordering] ? params[:ordering] : [params]) if params[:ordering] || params[:order_by]
 
 			options[:paginate] ? scope.paginate(:all, :page => params[:page], :per_page => options[:per_page], :order => order) : scope.find(:all, :order => order)
 		end
@@ -44,5 +42,21 @@ module ActiveRecord
 
 			scope
 		end
+		
+		# expects an array of params hashes, where each ordering hash
+		# includes at least an :order_by and optionally an :order value
+		def self.create_order(orders)
+			orders.map do |params|
+				if ["DESC", "ASC"].include?(params[:order].to_s.upcase)
+					asc_or_desc = params[:order].to_s.upcase
+				else
+					asc_or_desc = params[:order].to_i == 0 ? "ASC" : "DESC" # i'm assuming here that ASC is default
+				end
+
+				"`#{params[:order_by].gsub('.', '`.`')}` #{asc_or_desc}"
+			end.join(", ")
+		end
+		
+		
 	end
 end
