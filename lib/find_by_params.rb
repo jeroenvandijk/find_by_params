@@ -38,6 +38,8 @@ module ActiveRecord
 					scope = scope.send(method_id, arguments ) if self.respond_to?(method_id)
 				end
 			end
+			
+			scope = scope.scoped(:limit => options[:limit]) if options[:limit]
 
 			scope
 		end

@@ -81,10 +81,6 @@ describe "Added class methods to ActiveRecord::Base" do
   end
 
   describe "scoped_by_params" do
-    before :each do
-      @base.stubs(:scoped).returns(@scope)
-    end
-    
     it "should not call #scoped_by_user_id when params[:user_id] is blank?" do
       params = {:user_id => nil, :user_id => "" }
       @scope.expects(:scoped_by_user_id).never
@@ -101,9 +97,14 @@ describe "Added class methods to ActiveRecord::Base" do
     
       it "should call #scoped_by_user_id with params[:user_id] when a model responds to #scoped_by_user_id" do
         params = {:user_id => 1}
+        @base.stubs(:scoped).returns(@scope)
         @scope.expects(:scoped_by_user_id).with(1).once
         @base.stubs(:respond_to?).with { |v| v == :scoped_by_user_id || v == "scoped_by_user_id" }.returns(true)
         @base.scoped_by_params(params)
+      end
+      
+      it "should add a limit scope when options[:limit] is given" do
+        @base.scoped_by_params({}, :limit => 1).proxy_options.should == { :limit => 1 }
       end
     end
   end
