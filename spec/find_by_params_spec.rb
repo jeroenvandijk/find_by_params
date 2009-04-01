@@ -16,28 +16,11 @@ describe "Added class methods to ActiveRecord::Base" do
       @base.find_by_params(@params, @options)
     end
     
-    describe "ordering" do
-      before :each do
-        @base.expects(:scoped_by_params).with(@params, @options).returns(@scope)
-      end
-
-      it "should add ordering when order and order by is added" do
-        params = @params.merge(:order => 1, :order_by => "field_name")
-        @scope.expects(:find).with(:all, :order => "`field_name` DESC")
-        @base.find_by_params(params, @options)
-      end
-
-      it "should default to ASC" do
-        params = @params.merge(:order_by => "field_name")
-        @scope.expects(:find).with(:all, :order => "`field_name` ASC")
-        @base.find_by_params(params, @options)        
-      end
-      
-      it "should be DESC when params[:order] equals 1" do
-        params = @params.merge(:order => 1, :order_by => "field_name")
-        @scope.expects(:find).with(:all, :order => "`field_name` DESC")
-        @base.find_by_params(params, @options)        
-      end
+    it "should pass all the params and options to #order_by_params" do
+      @scope.stubs(:find => 1)
+      @base.expects(:scoped_by_params).returns(@scope)
+      @base.expects(:order_by_params).with(@params, @options)
+      @base.find_by_params(@params, @options)
     end
     
     it "should call paginate with params[:per_page] when params[:paginate] is true" do
@@ -53,6 +36,34 @@ describe "Added class methods to ActiveRecord::Base" do
       @scope.expects(:find)
       @base.find_by_params(@params, @options)
     end
+  end
+
+  describe "order_by_params" do
+    before :each do
+    end
+  
+    it "should add ordering with direction ASC when order_by is in params" do
+      @base.order_by_params(:order_by => "field.name").should == "`field`.`name` ASC"
+    end
+    
+    it "should return nil when :order_by or :orderings is not given" do
+      @base.order_by_params({:direction => 1}).should == nil
+    end
+    
+    describe "should add ordering with direction DESC when" do
+      it "is given :direction => :desc" do
+        @base.order_by_params(:order_by => "name", :direction => :desc).should == "`name` DESC"
+      end
+      
+      it "is given :direction => 1" do
+        @base.order_by_params(:order_by => "name", :direction => 1).should == "`name` DESC"
+      end
+    end
+    
+    it "should add multiple orderings when :ordering is given" do
+      @base.order_by_params(:ordering => [ { :order_by => "name", :direction => :desc }, { :order_by => "age" } ] ).should == "`name` DESC, `age` ASC"
+    end
+
   end
 
   describe "count_by_params" do

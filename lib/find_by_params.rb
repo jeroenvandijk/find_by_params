@@ -1,14 +1,13 @@
 module ActiveRecord
 	class Base
 		def self.find_by_params(params = {}, options = {})
-			params_not_for_scoping = [:page, :order_by, :order]
+			params_not_for_scoping = [:page, :order_by, :direction, :ordering]
 			options_not_for_scoping = [:per_page, :paginate]
 			
 			scope = scoped_by_params(params.reject  {|k, v| params_not_for_scoping.include?(k.to_sym) },
 															 options.reject {|k, v| options_not_for_scoping.include?(k.to_sym) })
 
-			# create the order part of the query, supports multiple order columns and directions
-			order = create_order(params[:ordering] ? params[:ordering] : [params]) if params[:ordering] || params[:order_by]
+			order = order_by_params(params, options)
 
 			options[:paginate] ? scope.paginate(:all, :page => params[:page], :per_page => options[:per_page], :order => order) : scope.find(:all, :order => order)
 		end
@@ -43,17 +42,34 @@ module ActiveRecord
 			scope
 		end
 		
+		protected
+		
 		# expects an array of params hashes, where each ordering hash
 		# includes at least an :order_by and optionally an :order value
-		def self.create_order(orders)
-			orders.map do |params|
-				if ["DESC", "ASC"].include?(params[:order].to_s.upcase)
-					asc_or_desc = params[:order].to_s.upcase
+		#
+		# Singular order
+		# :order_by => :age, :direction => :asc
+		#
+		# Multiple orders
+		# :ordering => [{:order_by => :name, :direction => :desc}, {:order_by => :age, :direction => :asc} ]
+		def self.order_by_params(params = {}, options = {})
+			if params[:ordering] || params[:order_by]
+				ordering = (params[:ordering] ? params[:ordering] : [params])
+			else
+				return nil
+			end
+
+			ordering.map do |order_pair|
+				order_by, direction = order_pair[:order_by], order_pair[:direction]
+				
+				if ["DESC", "ASC"].include?(direction.to_s.upcase)
+					asc_or_desc = direction.to_s.upcase
 				else
-					asc_or_desc = params[:order].to_i == 0 ? "ASC" : "DESC" # i'm assuming here that ASC is default
+					asc_or_desc = direction.to_i == 0 ? "ASC" : "DESC" # i'm assuming here that ASC is default
 				end
 
-				"`#{params[:order_by].gsub('.', '`.`')}` #{asc_or_desc}"
+				# Prevent sql injection by inserting back ticks
+				"`#{order_by.gsub('.', '`.`')}` #{asc_or_desc}"
 			end.join(", ")
 		end
 		
