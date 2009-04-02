@@ -87,6 +87,12 @@ describe "Added class methods to ActiveRecord::Base" do
       @base.scoped_by_params(params)
     end
     
+    it "should not call #scoped_by_city_region_id when params[:city][:region_id] is blank?" do
+      params = { :city => { :region_id => nil}, :city => { :region_id => "" } }
+      @scope.expects(:scoped_by_city).never
+      @base.scoped_by_params(params)
+    end
+    
     it "should add a limit scope when options[:limit] is given" do
       @base.scoped_by_params({}, :limit => 1).proxy_options.should == { :limit => 1 }
     end

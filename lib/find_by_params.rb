@@ -29,6 +29,7 @@ module ActiveRecord
 
 					if param_value.is_a?(Hash)                                                # say customer[name] = "jeroen"
 						arguments = Hash[*param_value.to_a.first]                               # only use the first key-value pair
+						next if arguments.values.first.blank?                                   # Move over the the next param if this one is blank
 					else
 						arguments = param_value
 					end
