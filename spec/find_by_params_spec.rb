@@ -87,7 +87,22 @@ describe "Added class methods to ActiveRecord::Base" do
       @base.scoped_by_params(params)
     end
     
+    it "should add a limit scope when options[:limit] is given" do
+      @base.scoped_by_params({}, :limit => 1).proxy_options.should == { :limit => 1 }
+    end
+    
     describe "with no-blank params" do
+      before(:each) do
+        @base.stubs(:scoped).returns(@scope)
+      end
+
+      it "should call #scoped_by_user_id when params[:user_id] is false" do
+        params = {:user_id => false}
+        @base.stubs(:respond_to?).returns(true)
+        @scope.expects(:scoped_by_user_id).with(false).once        
+        @base.scoped_by_params(params)
+      end
+
       it "should not call #scoped_by_user_id when a model does not respond to #scoped_by_user_id" do
         params = {:user_id => 1}
         @scope.expects(:scoped_by_user_id).never
@@ -97,15 +112,12 @@ describe "Added class methods to ActiveRecord::Base" do
     
       it "should call #scoped_by_user_id with params[:user_id] when a model responds to #scoped_by_user_id" do
         params = {:user_id => 1}
-        @base.stubs(:scoped).returns(@scope)
         @scope.expects(:scoped_by_user_id).with(1).once
         @base.stubs(:respond_to?).with { |v| v == :scoped_by_user_id || v == "scoped_by_user_id" }.returns(true)
         @base.scoped_by_params(params)
       end
       
-      it "should add a limit scope when options[:limit] is given" do
-        @base.scoped_by_params({}, :limit => 1).proxy_options.should == { :limit => 1 }
-      end
+
     end
   end
 end

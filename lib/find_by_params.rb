@@ -24,7 +24,7 @@ module ActiveRecord
 			scope = self.scoped({})
 
 			params.each_pair do |param_key, param_value|
-				if !param_value.blank?
+				if !param_value.blank? || param_value == false
 					field_name = param_key
 
 					if param_value.is_a?(Hash)                                                # say customer[name] = "jeroen"
