@@ -41,7 +41,8 @@ module ActiveRecord
 			end
 			
 			scope = scope.scoped(:limit => options[:limit]) if options[:limit]
-
+			scope = scope.scoped(:select => escape_fields(params[:select_fields]).join(", ") ) if params[:select_fields]
+			
 			scope
 		end
 		
@@ -71,9 +72,20 @@ module ActiveRecord
 					asc_or_desc = direction.to_i == 0 ? "ASC" : "DESC" # i'm assuming here that ASC is default
 				end
 
+				self.sanitize_sql(["? ?", ordering, direction ])
 				# Prevent sql injection by inserting back ticks
-				"`#{order_by.gsub('.', '`.`')}` #{asc_or_desc}"
+				"#{escape_fields(order_by)} #{asc_or_desc}"
 			end.join(", ")
+		end
+		
+		def self.escape_fields(*fields)
+			evil_characters = /\'\`/
+			
+			tmp_fields = [fields].flatten
+			tmp_fields.map do |f|
+				sanitized = f.to_s.gsub(evil_characters, '')
+				"`#{sanitized.gsub('.', '`.`')}`"
+			end
 		end
 		
 		

@@ -81,6 +81,28 @@ describe "Added class methods to ActiveRecord::Base" do
   end
 
   describe "scoped_by_params" do
+		describe "should prevents sql injection by" do
+			class Dummy < ActiveRecord::Base
+				belongs_to :user
+			end
+
+			it "removing evil characters from first level fields" do
+				params = { "u'ser`_id" => 1 }
+				pending "not sure how to test this on AR::Base => integration tests needed" do
+					@base.scoped_by_params(params).proxy_options.should == {:conditions=> ["user_id = ?", 1] }
+				end
+			end
+		
+			it "removing evil characters from first level fields" do
+				params = { "user" => { "na`'me" => "jeroen"} }
+				pending "not sure how to test this on AR::Base => integration tests needed" do
+					@base.scoped_by_params(params).proxy_options.should == {:conditions=> ["users.name = ?", "jeroen"], :include=>[:users]}
+				end
+			end
+
+		end
+
+
     it "should not call #scoped_by_user_id when params[:user_id] is blank?" do
       params = {:user_id => nil, :user_id => "" }
       @scope.expects(:scoped_by_user_id).never
