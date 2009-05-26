@@ -22,7 +22,6 @@ module ActiveRecord
 		# looks for fields on other models.
 		def self.scoped_by_params(params = {}, options = {})
 			scope = self.scoped({})
-
 			params.each_pair do |param_key, param_value|
 				if !param_value.blank? || param_value == false
 					field_name = param_key
