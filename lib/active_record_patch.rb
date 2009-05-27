@@ -108,7 +108,7 @@ module ActiveRecord
 						use_like = true
 					end
 					
-					prepared_conditions << (use_like ? ["`#{table_name}`.`#{field_name}` LIKE ?"] : ["`#{table_name}`.`#{field_name}` IN (?)"] )
+					prepared_conditions << (use_like ? ["#{table_name}.#{field_name} LIKE ?"] : ["#{table_name}.#{field_name} IN (?)"] )
 					
 					includes += find_includes( association_name, use_join_table)
 				end
